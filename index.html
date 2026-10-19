@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Мой голосовой помощник</title>
+<style>
+body {
+  margin: 0; padding: 25px 18px;
+  background: #101827; color: white;
+  font-family: -apple-system, sans-serif;
+  text-align: center;
+}
+main {
+  max-width: 440px; margin: 35px auto;
+}
+h1 { font-size: 28px; }
+p { color: #cbd5e1; line-height: 1.6; }
+button, input {
+  box-sizing: border-box; width: 100%;
+  padding: 15px; margin-top: 12px;
+  border: 0; border-radius: 14px; font-size: 17px;
+}
+button { background: #3978f6; color: white; }
+input { background: white; color: #111827; }
+#answer {
+  margin-top: 24px; padding: 18px;
+  background: #202c40; border-radius: 14px;
+  line-height: 1.6; overflow-wrap: anywhere;
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>🎙️ Мой ИИ-помощник</h1>
+  <p>Привет! Я твой русскоязычный голосовой помощник.</p>
+  <button id="listen">🎤 Говорить</button>
+  <input id="question" placeholder="Напиши сообщение..." />
+  <button id="send">Отправить</button>
+  <div id="answer" aria-live="polite">
+    Нажми «Говорить» или напиши сообщение.
+  </div>
+</main>
+<script>
+const answer = document.getElementById('answer');
+const question = document.getElementById('question');
+
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'ru-RU';
+  window.speechSynthesis.speak(utterance);
+}
+
+function respond(text) {
+  const q = text.toLowerCase();
+  let reply;
+
+  if (q.includes('привет')) {
+    reply = 'Привет! Рад с тобой общаться.';
+  } else if (q.includes('время')) {
+    reply = 'Сейчас ' + new Date().toLocaleTimeString('ru-RU',
+      {hour:'2-digit', minute:'2-digit'}) + '.';
+  } else if (q.includes('дата') || q.includes('число')) {
+    reply = 'Сегодня ' + new Date().toLocaleDateString('ru-RU') + '.';
+  } else if (q.includes('как дела')) {
+    reply = 'Всё хорошо! Чем могу помочь?';
+  } else if (q.includes('открой')) {
+    reply = 'Я пока не могу самостоятельно открывать приложения. Это ограничение браузера.';
+  } else {
+    reply = 'Я услышал: ' + text +
+      '. Пока подключены только простые ответы. Для настоящего ИИ-диалога нужно подключить ИИ-сервис.';
+  }
+
+  answer.textContent = reply;
+  speak(reply);
+}
+
+document.getElementById('send').onclick = () => {
+  const text = question.value.trim();
+  if (text) respond(text);
+};
+
+document.getElementById('listen').onclick = () => {
+  const Recognition = window.SpeechRecognition ||
+                      window.webkitSpeechRecognition;
+
+  if (!Recognition) {
+    answer.textContent =
+      'Распознавание речи недоступно в этом браузере. Попробуй другой поддерживаемый браузер.';
+    return;
+  }
+
+  const recognition = new Recognition();
+  recognition.lang = 'ru-RU';
+  recognition.interimResults = false;
+  recognition.onresult = event => {
+    const text = event.results[0][0].transcript;
+    question.value = text;
+    respond(text);
+  };
+  recognition.onerror = () => {
+    answer.textContent =
+      'Не удалось распознать речь. Проверь разрешение на микрофон.';
+  };
+  recognition.start();
+};
+</script>
+</body>
+</html>
